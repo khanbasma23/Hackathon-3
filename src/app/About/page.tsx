@@ -6,7 +6,7 @@ import { AiOutlineExclamationCircle } from "react-icons/ai";
 import { GiSofa } from "react-icons/gi";
 import { FiShoppingCart } from "react-icons/fi";
 import { TbCircleNumber2Filled } from "react-icons/tb";
-import Link from 'next/link';
+
 
 const Aboutus = () => {
   return (
