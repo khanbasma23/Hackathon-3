@@ -48,7 +48,7 @@ const ProductDetails = () => {
     };
 
     fetchProduct();
-  }, [slug]);
+  }, [slug, setProduct]);  // Add setProduct as a dependency
 
   if (loading) return <p className="text-center py-8">Loading...</p>;
   if (error) return <p className="text-center py-8 text-red-500">{error}</p>;
@@ -56,20 +56,20 @@ const ProductDetails = () => {
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">
-        {product.title.replace(/'/g, "’")}
+        {product?.title?.replace(/'/g, "’")}
       </h1>
       <Image
-        src={product.imageUrl || "/fallback.jpg"}
-        alt={product.title}
+        src={product?.imageUrl || "/fallback.jpg"}
+        alt={product?.title}
         width={500}
         height={500}
         className="rounded-md object-cover"
         priority
       />
       <p className="mt-4 text-lg">
-        {product.description.replace(/'/g, "’")}
+        {product?.description?.replace(/'/g, "’")}
       </p>
-      <p className="text-xl font-bold mt-2">${product.price}</p>
+      <p className="text-xl font-bold mt-2">${product?.price}</p>
     </div>
   );
 };
