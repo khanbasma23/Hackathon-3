@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { createClient } from "@sanity/client";
 import Image from "next/image";
 
-
 const sanity = createClient({
   projectId: "2ft3n435",
   dataset: "production",
@@ -14,14 +13,17 @@ const sanity = createClient({
 
 const ProductDetails = () => {
   const router = useRouter();
-  const { slug } = router.query; 
-
-  const [product, setProduct] = useState<any>(null);
+  const { slug } = router.query;
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!slug) return;
-
+    
     const fetchProduct = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const query = `*[_type == "product" && slug.current == $slug][0] {
           _id,
@@ -33,27 +35,34 @@ const ProductDetails = () => {
         }`;
 
         const data = await sanity.fetch(query, { slug });
-        console.log("Fetched Product:", data);
+        if (!data) {
+          setError("Product not found");
+        }
         setProduct(data);
       } catch (error) {
         console.error("Error Fetching Product:", error);
+        setError("Failed to load product details");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProduct();
-  }, [slug]);
+  }, [slug, setProduct]);
 
-  if (!product) return <p>Loading...</p>;
+  if (loading) return <p className="text-center py-8">Loading...</p>;
+  if (error) return <p className="text-center py-8 text-red-500">{error}</p>;
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold">{product.title}</h1>
+    <div className="p-8 max-w-3xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4">{product.title}</h1>
       <Image
         src={product.imageUrl || "/fallback.jpg"}
         alt={product.title}
         width={500}
         height={500}
-        className="rounded-md"
+        className="rounded-md object-cover"
+        priority
       />
       <p className="mt-4 text-lg">{product.description}</p>
       <p className="text-xl font-bold mt-2">${product.price}</p>
