@@ -63,16 +63,29 @@ const ProductCards: React.FC = () => {
     if (typeof window !== "undefined") {
       const storedCart = localStorage.getItem("cart");
       if (storedCart) {
-        setCart(JSON.parse(storedCart));
+        try {
+          const parsedCart = JSON.parse(storedCart);
+          if (Array.isArray(parsedCart)) {
+            setCart(parsedCart);
+          }
+        } catch (error) {
+          console.error("Error parsing cart from localStorage", error);
+        }
       }
     }
   }, []);
 
   const addToCart = (product: Product) => {
-    const updatedCart = [...cart, product];
-    setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-    alert(`${product.title.replace(/'/g, "’")} has been added to your cart!`);
+    const updatedCart = [...cart];
+    const itemExists = updatedCart.some(item => item._id === product._id);
+    if (!itemExists) {
+      updatedCart.push(product);
+      setCart(updatedCart);
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
+      alert(`${product.title.replace(/'/g, "’")} has been added to your cart!`);
+    } else {
+      alert(`${product.title.replace(/'/g, "’")} is already in your cart.`);
+    }
   };
 
   const truncateDescription = (description: string, maxLength = 50) => {
@@ -109,7 +122,7 @@ const ProductCards: React.FC = () => {
             {/* Link to product detail page */}
             <Link href={`/product/${product.slug?.current || "#"}`}>
               <h2 className="text-lg font-semibold cursor-pointer hover:text-blue-600">
-                {product.title.replace(/'/g, "’")}
+                {product.title?.replace(/'/g, "’")}
               </h2>
             </Link>
 
@@ -135,7 +148,7 @@ const ProductCards: React.FC = () => {
             {cart.map((item, index) => (
               <li key={index} className="flex justify-between items-center">
                 <div>
-                  <p className="font-medium">{item.title.replace(/'/g, "’")}</p>
+                  <p className="font-medium">{item.title?.replace(/'/g, "’")}</p>
                   <p className="text-sm">${item.price.toFixed(2)}</p>
                 </div>
                 <Image
@@ -149,7 +162,7 @@ const ProductCards: React.FC = () => {
             ))}
           </ul>
         ) : (
-          <p>Your Cart Is Empty Please Add Products</p>
+          <p>Your Cart is Empty. Please Add Some Products!</p>
         )}
       </div>
     </div>
