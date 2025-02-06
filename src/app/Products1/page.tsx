@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import sanity from './sanityClient'; // Make sure you have a sanity client setup for fetching
 
