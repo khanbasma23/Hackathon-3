@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const sanity = createClient({
-  projectId: "2ft3n435", // 
+  projectId: "2ft3n435", // Ensure this is correct
   dataset: "production",
   apiVersion: "2023-01-01",
   useCdn: true,
@@ -16,8 +16,8 @@ interface Product {
   title: string;
   price: number;
   description: string;
-  discountPercentage: number;
-  imageUrl?: string; 
+  discountPercentage?: number;
+  imageUrl?: string;
   productImage?: {
     asset?: {
       url: string;
@@ -33,50 +33,53 @@ const ProductCards: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Product[]>([]);
 
-  const fetchProducts = async () => {
-    try {
-      const query = `
-        *[_type == "product"] {
-          _id,
-          title,
-          price,
-          description,
-          discountPercentage,
-          "imageUrl": productImage.asset->url, 
-          tags,
-          slug
-        }
-      `;
-      const data = await sanity.fetch(query);
-      console.log("Fetched Products:", data);
-      setProducts(data);
-    } catch (error) {
-      console.error("Error Fetching Products:", error);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const query = `
+          *[_type == "product"] {
+            _id,
+            title,
+            price,
+            description,
+            discountPercentage,
+            "imageUrl": productImage.asset->url, 
+            tags,
+            slug
+          }
+        `;
+        const data = await sanity.fetch(query);
+        console.log("Fetched Products:", data);
+        setProducts(data);
+      } catch (error) {
+        console.error("Error Fetching Products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []); // Runs only on mount
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedCart = localStorage.getItem("cart");
+      if (storedCart) {
+        setCart(JSON.parse(storedCart));
+      }
     }
-  };
+  }, []);
 
   const addToCart = (product: Product) => {
     const updatedCart = [...cart, product];
     setCart(updatedCart);
     localStorage.setItem("cart", JSON.stringify(updatedCart));
-    alert(`${product.title} has been added to your cart!`);
+    alert(`${product.title.replace(/'/g, "’")} has been added to your cart!`);
   };
 
-  //  Truncate Description 
   const truncateDescription = (description: string, maxLength = 50) => {
     return description.length > maxLength
-      ? description.substring(0, maxLength) + "..."
-      : description;
+      ? description.substring(0, maxLength).replace(/'/g, "’") + "..."
+      : description.replace(/'/g, "’");
   };
-
-  //  Load Products & Cart from Local Storage
-  useEffect(() => {
-    fetchProducts();
-    const storedCart = localStorage.getItem("cart");
-    if (storedCart) {
-      setCart(JSON.parse(storedCart));
-    }
-  }, []);
 
   return (
     <div className="p-4">
@@ -84,12 +87,16 @@ const ProductCards: React.FC = () => {
         Products From API's Data
       </h2>
 
-      {/*  Product Grid */}
+      {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
           <div key={product._id} className="bg-white shadow-md rounded-lg p-4">
             {/* Image with link to open in new tab */}
-            <a href={product.imageUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              href={product.imageUrl || "https://via.placeholder.com/300"}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Image
                 src={product.imageUrl || "/fallback.jpg"}
                 alt={product.title}
@@ -98,16 +105,16 @@ const ProductCards: React.FC = () => {
                 className="w-full h-48 object-cover rounded-md cursor-pointer"
               />
             </a>
-            
+
             {/* Link to product detail page */}
-            <Link href={`/product/${product.slug?.current}`}>
+            <Link href={`/product/${product.slug?.current || "#"}`}>
               <h2 className="text-lg font-semibold cursor-pointer hover:text-blue-600">
-                {product.title}
+                {product.title.replace(/'/g, "’")}
               </h2>
             </Link>
-            
+
             <p className="text-slate-800 mt-2 text-sm">
-              {truncateDescription(product.description)}
+              {truncateDescription(product.description || "")}
             </p>
             <p className="text-slate-600 font-bold">${product.price}</p>
             <button
@@ -120,7 +127,7 @@ const ProductCards: React.FC = () => {
         ))}
       </div>
 
-      {/*  Cart Summary */}
+      {/* Cart Summary */}
       <div className="mt-8 bg-slate-100 p-6 rounded-lg shadow-md">
         <h2 className="text-lg font-bold text-pink-500">Cart Summary</h2>
         {cart.length > 0 ? (
@@ -128,7 +135,7 @@ const ProductCards: React.FC = () => {
             {cart.map((item, index) => (
               <li key={index} className="flex justify-between items-center">
                 <div>
-                  <p className="font-medium">{item.title}</p>
+                  <p className="font-medium">{item.title.replace(/'/g, "’")}</p>
                   <p className="text-sm">${item.price.toFixed(2)}</p>
                 </div>
                 <Image
